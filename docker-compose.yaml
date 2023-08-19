@@ -1,0 +1,40 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres
+    restart: always
+    env_file:
+      - .docker.env
+    ports:
+      - 5432:5432
+    volumes:
+      - ./data/postgres:/var/lib/postgresql/data
+  pgadmin:
+    image: dpage/pgadmin4
+    restart: always
+    env_file:
+      - .docker.env
+    ports:
+      - 6005:80
+    depends_on:
+      - postgres
+    volumes:
+      - ./data/pgadmin:/var/lib/pgadmin
+  minio:
+    image: quay.io/minio/minio
+    ports:
+     - "9000:9000"
+     - "9090:9090"
+    env_file:
+      - .docker.env
+    command: server /data --console-address ":9090"
+    volumes:
+     - ./data/minio:/data
+    healthcheck:
+     test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+     interval: 30s
+     timeout: 20s
+     retries: 3
+    depends_on:
+      - postgres
